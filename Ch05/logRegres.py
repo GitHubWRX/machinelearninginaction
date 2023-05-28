@@ -4,6 +4,7 @@ Logistic Regression Working Module
 @author: Peter
 '''
 from numpy import *
+from importlib import reload
 
 def loadDataSet():
     dataMat = []; labelMat = []
@@ -28,6 +29,41 @@ def gradAscent(dataMatIn, classLabels):
         h = sigmoid(dataMatrix*weights)     #matrix mult
         error = (labelMat - h)              #vector subtraction
         weights = weights + alpha * dataMatrix.transpose()* error #matrix mult
+    return weights
+    
+
+def gradAscent_derive_mse(dataMatIn, classLabels):
+    """MSE-LOSS对应的梯度应当为【-2*error*sigmoid*(1-sigmoid)*x】
+    单个样本来说，x为单个样本，error、sigmoid为数值
+    多个样本来说，x为多个样本，error、sigmoid为向量"""
+    dataMatrix = mat(dataMatIn)             #convert to NumPy matrix
+    labelMat = mat(classLabels).transpose() #convert to NumPy matrix
+    m,n = shape(dataMatrix)
+    alpha = 0.001
+    maxCycles = 5000
+    weights = ones((n,1))
+    for k in range(maxCycles):              #heavy on matrix operations
+        h = sigmoid(dataMatrix*weights)     #matrix mult
+        error = (labelMat - h)              #vector subtraction
+        weights = weights + alpha * dataMatrix.transpose()*multiply(multiply(h,(1-h)),error) #matrix mult
+    return weights
+
+
+def gradAscent_derive_mae(dataMatIn, classLabels):
+    """MAE-LOSS对应的梯度应当为【error>0: -sigmoid*(1-sigmoid)*x】
+    MAE-LOSS对应的梯度应当为【error<0: sigmoid*(1-sigmoid)*x】
+    单个样本来说，x为单个样本，error、sigmoid为数值
+    多个样本来说，x为多个样本，error、sigmoid为向量"""
+    dataMatrix = mat(dataMatIn)             #convert to NumPy matrix
+    labelMat = mat(classLabels).transpose() #convert to NumPy matrix
+    m,n = shape(dataMatrix)
+    alpha = 0.001
+    maxCycles = 5000
+    weights = ones((n,1))
+    for k in range(maxCycles):              #heavy on matrix operations
+        h = sigmoid(dataMatrix*weights)     #matrix mult
+        error = (labelMat - h)              #vector subtraction
+        weights = weights + alpha * dataMatrix.transpose()*multiply(multiply(h,(1-h)),multiply(error, -1/abs(error))) #matrix mult
     return weights
 
 def plotBestFit(weights):
@@ -102,12 +138,12 @@ def colicTest():
         if int(classifyVector(array(lineArr), trainWeights))!= int(currLine[21]):
             errorCount += 1
     errorRate = (float(errorCount)/numTestVec)
-    print "the error rate of this test is: %f" % errorRate
+    print("the error rate of this test is: %f" % errorRate)
     return errorRate
 
 def multiTest():
     numTests = 10; errorSum=0.0
     for k in range(numTests):
         errorSum += colicTest()
-    print "after %d iterations the average error rate is: %f" % (numTests, errorSum/float(numTests))
+    print("after %d iterations the average error rate is: %f" % (numTests, errorSum/float(numTests)))
         

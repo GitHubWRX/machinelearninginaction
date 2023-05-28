@@ -29,15 +29,36 @@ def clipAlpha(aj,H,L):
     return aj
 
 def smoSimple(dataMatIn, classLabels, C, toler, maxIter):
+    """
+    A function to calculate simple SMO, the difference is that we choose alpha_1 in order, a  nd choose alpha_2 in random.
+    :param dataMatIn: X matrix
+    :param classLabels: y vector
+    :param C: soft interval
+    :param toler: error of precision, a very small number
+    :param maxIter: like epoch
+    :return: alphas vector
+    """
+    # transform to numpy
     dataMatrix = mat(dataMatIn); labelMat = mat(classLabels).transpose()
+    # initialize b, get the shape of input (m-samples, n-dims)
     b = 0; m,n = shape(dataMatrix)
+    # initialize alphas
     alphas = mat(zeros((m,1)))
+    # # initialize iteration
     iter = 0
     while (iter < maxIter):
+        # record whether alpha pair has changed
         alphaPairsChanged = 0
+        # for every alpha, treat as outer alpha_1
         for i in range(m):
+            # f(xi) = summation(alpha_j * y_j * X_i * X_j^T) + b
             fXi = float(multiply(alphas,labelMat).T*(dataMatrix*dataMatrix[i,:].T)) + b
-            Ei = fXi - float(labelMat[i])#if checks if an example violates KKT conditions
+            # Ei used for futher calculate
+            Ei = fXi - float(labelMat[i])
+            # if checks if an example violates KKT conditions
+            # Let S = y_i * Ei = y_i * (fXi - yi) = y_i * fXi - yi^2 = y_i * fXi - 1; compare with 0
+            # If S >  toler, means S > 0, or y_i * fXi > 1, not Support Vector, so alpha_i should = 0, but alpha_i is not zero, violate KKT
+            # If S < -toler, means S < 0, or y_i * fXi < 1, Wrong Point alpha_i should = C, but alpha_i <C, violate KKT
             if ((labelMat[i]*Ei < -toler) and (alphas[i] < C)) or ((labelMat[i]*Ei > toler) and (alphas[i] > 0)):
                 j = selectJrand(i,m)
                 fXj = float(multiply(alphas,labelMat).T*(dataMatrix*dataMatrix[j,:].T)) + b
